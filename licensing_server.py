@@ -18,33 +18,22 @@ def validate_license():
     if not license_key:
         return jsonify({"error": "License key required"}), 400
 
-    # Call Keygen API
-    url = f"https://api.keygen.sh/v1/accounts/{KEYGEN_ACCOUNT_ID}/licenses/actions/validate-key"
+    url = f"{KEYGEN_BASE_URL}/licenses/actions/validate-key"
     headers = {
-    "Authorization": f"Bearer {KEYGEN_API_TOKEN}",
-    "Accept": "application/vnd.api+json",
-    "Content-Type": "application/vnd.api+json"
-}
-    
-    # Try simpler payload first
+        "Authorization": f"Bearer {KEYGEN_API_TOKEN}",
+        "Accept": "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json"
+    }
     payload = {
         "meta": {
             "key": license_key
         }
     }
 
-    print("=== DEBUG URL ===")
-    print(url)
-    print("=== DEBUG HEADERS ===")
-    print(headers)
-    print("=== DEBUG PAYLOAD ===")
-    print(payload)
-
-    response = requests.post(url, headers=headers, json=payload)
-
-    print("=== DEBUG RESPONSE ===")
-    print(response.status_code)
-    print(response.text)
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+    except requests.exceptions.RequestException:
+        return jsonify({"valid": False, "error": "License validation request failed"}), 500
 
     if response.status_code == 200:
         return jsonify({"valid": True, "details": response.json()}), 200
@@ -52,4 +41,4 @@ def validate_license():
         return jsonify({"valid": False, "error": response.json()}), 403
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(port=5000)

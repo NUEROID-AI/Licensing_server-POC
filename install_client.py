@@ -16,15 +16,28 @@ def load_signed_license():
     except FileNotFoundError:
         print("❌ License file not found. Ensure 'signed_license.json' is present.")
         sys.exit(1)
+    except json.JSONDecodeError:
+        print("❌ Invalid JSON in license file.")
+        sys.exit(1)
 
 def verify_signature(license_data, signature_hex):
     try:
-        license_json = json.dumps(license_data, separators=(',', ':'), sort_keys=True).encode("utf-8")
+        license_json = json.dumps(
+            license_data,
+            separators=(',', ':'), 
+            sort_keys=True
+        ).encode("utf-8")
         h = SHA256.new(license_json)
-
-        with open(PUBLIC_KEY_FILE, "r") as f:
-            pubkey = RSA.import_key(f.read())
-
+        # added explicit error handling around public key load
+        try:
+            with open(PUBLIC_KEY_FILE, "r") as f:
+                pubkey = RSA.import_key(f.read())
+        except FileNotFoundError:
+            print("❌ Public key file not found.")
+            return False
+        except ValueError:
+            print("❌ Invalid public key format.")
+            return False
         pkcs1_15.new(pubkey).verify(h, bytes.fromhex(signature_hex))
         return True
     except (ValueError, TypeError):

@@ -5,8 +5,15 @@ from Crypto.Signature import pkcs1_15
 from Crypto.PublicKey import RSA
 
 def load_signed_license(path):
-    with open(path, "r") as f:
-        return json.load(f)
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"❌ License file not found: {path}")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print(f"❌ Invalid JSON in license file: {path}")
+        sys.exit(1)
 
 def verify_license(signed_license):
     try:
